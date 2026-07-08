@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagnóstico Financeiro — Despesas Primárias</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    /* Marca MindHub */
+    --brand: #E63329; --brand-dark: #C1281F; --brand-light: #FDECEA; --brand-tint: #FEF5F4;
+    /* Tinta e neutros (nomes antigos mantidos p/ compatibilidade) */
+    --black: #1A1A1A; --ink: #1A1A1A; --gray-dark: #3D3D3D; --ink-soft: #3D3D3D;
+    --gray: #6B6B6B; --gray-light: #9A9A96;
+    --gray-bg: #F6F5F2; --paper: #F6F5F2; --white: #FFFFFF; --surface: #FFFFFF;
+    --border: #E7E5E0; --border-strong: #D8D6D0;
+    /* Estados funcionais */
+    --green: #157347; --green-bg: #E9F6EF;
+    --yellow: #8A6200; --yellow-bg: #FFF8E1;
+    --red-text: #C1281F; --red-bg: #FDECEA;
+    /* Sistema */
+    --radius: 10px; --radius-lg: 16px;
+    --shadow: 0 1px 2px rgba(20,18,15,.04), 0 10px 28px -14px rgba(20,18,15,.14);
+    --ring: 0 0 0 3px rgba(230,51,41,.15);
+    --ease: cubic-bezier(.4,0,.2,1);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: var(--paper); color: var(--ink); min-height: 100vh; padding: 1.75rem 1rem 4rem; line-height: 1.55; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  .container { max-width: 660px; margin: 0 auto; }
+
+  /* Cabeçalho */
+  .header { display: flex; align-items: center; gap: 13px; margin-bottom: 1.75rem; }
+  .logo-mark { width: 44px; height: 44px; background: var(--brand); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 12px -4px rgba(230,51,41,.5); }
+  .logo-mark svg { width: 23px; height: 23px; }
+  .header-text h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+  .header-text p { font-size: 12.5px; color: var(--gray); margin-top: 1px; }
+
+  /* Progresso */
+  .progress-wrap { margin-bottom: 1.75rem; }
+  .progress-steps { display: flex; gap: 6px; margin-bottom: 9px; }
+  .ps { flex: 1; height: 4px; border-radius: 99px; background: var(--border-strong); transition: background .35s var(--ease); cursor: pointer; }
+  .ps.done { background: var(--brand); }
+  .ps.active { background: var(--brand); opacity: .45; }
+  .progress-labels { display: flex; justify-content: space-between; }
+  .progress-labels span { font-size: 11px; font-weight: 500; color: var(--gray-light); cursor: pointer; padding: 3px 4px; border-radius: 5px; transition: color .15s; user-select: none; }
+  .progress-labels span.active-label { color: var(--brand); font-weight: 700; }
+  .progress-labels span:hover { color: var(--brand); }
+  .progress-labels span.locked { cursor: default; opacity: .45; }
+  .progress-labels span.locked:hover { color: var(--gray-light); }
+
+  /* Card / etapa */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.9rem; box-shadow: var(--shadow); margin-bottom: 1rem; }
+  .step { display: none; }
+  .step.active { display: block; animation: stepIn .32s var(--ease); }
+  @keyframes stepIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .step-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .09em; color: var(--brand); text-transform: uppercase; margin-bottom: 7px; }
+  .step-title { font-size: 23px; font-weight: 700; letter-spacing: -0.02em; color: var(--ink); margin-bottom: 8px; line-height: 1.18; }
+  .step-desc { font-size: 14px; color: var(--gray); margin-bottom: 1.6rem; line-height: 1.55; }
+  .tip { background: var(--brand-tint); border: 1px solid var(--brand-light); border-left: 3px solid var(--brand); border-radius: 0 var(--radius) var(--radius) 0; padding: 11px 14px; font-size: 13px; color: var(--brand-dark); margin-bottom: 1.5rem; line-height: 1.5; }
+
+  /* Seções e campos */
+  .section-head { font-size: 11px; font-weight: 700; letter-spacing: .09em; color: var(--gray); text-transform: uppercase; margin: 1.6rem 0 1rem; padding-bottom: 7px; border-bottom: 1px solid var(--border); }
+  .section-head:first-of-type { margin-top: 0; }
+  .field { margin-bottom: 1rem; }
+  .field-label { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 4px; }
+  .field-label .req { color: var(--brand); margin-left: 2px; }
+  .field-hint { font-size: 12px; color: var(--gray-light); margin-bottom: 6px; line-height: 1.4; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: stretch; }
+  .field-row .field { display: flex; flex-direction: column; position: relative; }
+  .field-row .field .input-wrap { margin-top: auto; }
+  @media (max-width: 520px) { .field-row { grid-template-columns: 1fr; } }
+
+  .input-wrap { position: relative; }
+  .input-wrap .prefix { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 13px; font-weight: 500; color: var(--gray-light); pointer-events: none; }
+  input[type=text], textarea { width: 100%; border: 1.5px solid var(--border-strong); border-radius: var(--radius); font-size: 14px; color: var(--ink); background: var(--surface); transition: border-color .15s, box-shadow .15s; font-family: inherit; }
+  input[type=text] { height: 44px; padding: 0 12px; }
+  input[type=text][inputmode="numeric"] { padding: 0 12px 0 34px; font-variant-numeric: tabular-nums; -moz-appearance: textfield; }
+  textarea { padding: 10px 12px; resize: vertical; min-height: 68px; line-height: 1.5; }
+  input[type=text]:focus, textarea:focus { outline: none; border-color: var(--brand); box-shadow: var(--ring); }
+  input[type=text]::placeholder, textarea::placeholder { color: var(--gray-light); }
+  input[type=text].error { border-color: var(--brand); background: var(--brand-tint); }
+  .error-msg { font-size: 12px; font-weight: 500; color: var(--brand); margin-top: 5px; display: none; }
+  .error-msg.show { display: block; }
+
+  /* Toggle de canal */
+  .canal-toggle { display: flex; flex-direction: column; gap: 8px; margin-bottom: 1rem; }
+  .canal-item { border: 1.5px solid var(--border-strong); border-radius: var(--radius); overflow: hidden; transition: border-color .2s, background .2s; }
+  .canal-item.sim { border-color: var(--green); background: var(--green-bg); }
+  .canal-item.nao { border-color: var(--border); background: var(--paper); }
+  .canal-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; gap: 10px; }
+  .canal-name { font-size: 14px; font-weight: 600; color: var(--ink); }
+  .canal-item.nao .canal-name { color: var(--gray); }
+  .canal-btns { display: flex; gap: 6px; flex-shrink: 0; }
+  .canal-btn { padding: 6px 17px; border-radius: 99px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1.5px solid var(--border-strong); background: var(--surface); color: var(--gray); transition: all .15s; }
+  .canal-btn:hover { border-color: var(--gray); color: var(--ink); }
+  .canal-item.sim .canal-btn.sim { background: var(--green); border-color: var(--green); color: #fff; }
+  .canal-item.nao .canal-btn.nao { background: var(--ink-soft); border-color: var(--ink-soft); color: #fff; }
+  .canal-body { display: none; padding: 0 14px 14px; }
+  .canal-item.sim .canal-body { display: block; }
+
+  /* Justificativa */
+  .justificativa-wrap { margin-top: 7px; display: none; }
+  .justificativa-wrap.show { display: block; animation: stepIn .25s var(--ease); }
+  .justificativa-label { font-size: 12px; color: var(--gray); margin-bottom: 5px; }
+  /* No layout de 2 colunas a justificativa sai do fluxo para nao empurrar a caixa vizinha. O espaco abaixo e reservado via JS (margem na .field-row). No mobile (1 coluna) ela volta ao fluxo normal. */
+  @media (min-width: 521px) {
+    .field-row .justificativa-wrap { position: absolute; left: 0; right: 0; top: 100%; margin-top: 6px; z-index: 2; }
+  }
+
+  /* Navegação */
+  .nav { display: flex; justify-content: space-between; align-items: center; margin-top: 1.4rem; gap: 12px; }
+  .btn { padding: 11px 22px; border-radius: var(--radius); font-size: 14px; font-weight: 600; cursor: pointer; transition: background .15s, border-color .15s, transform .08s; border: 1.5px solid var(--border-strong); background: var(--surface); color: var(--ink); }
+  .btn:hover { background: var(--paper); border-color: var(--gray-light); }
+  .btn:active { transform: translateY(1px); }
+  .btn:disabled { opacity: .35; cursor: default; pointer-events: none; }
+  .btn-primary { background: var(--brand); color: #fff; border-color: var(--brand); box-shadow: 0 4px 14px -6px rgba(230,51,41,.6); }
+  .btn-primary:hover { background: var(--brand-dark); border-color: var(--brand-dark); }
+  .nav-counter { font-size: 13px; font-weight: 500; color: var(--gray-light); font-variant-numeric: tabular-nums; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 1.25rem 0; }
+
+  /* Projeção */
+  .proj-card { background: var(--paper); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+  .proj-result { font-size: 29px; font-weight: 700; letter-spacing: -0.02em; color: var(--brand); margin: 8px 0 4px; font-variant-numeric: tabular-nums; }
+  .proj-label { font-size: 12px; color: var(--gray); line-height: 1.45; }
+
+  /* Tela de envio */
+  .sent-screen { text-align: center; padding: 1.5rem 1rem; }
+  .sent-icon { width: 66px; height: 66px; background: var(--green-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.4rem; animation: pop .45s var(--ease); }
+  @keyframes pop { 0% { transform: scale(.6); opacity: 0; } 60% { transform: scale(1.08); } 100% { transform: scale(1); opacity: 1; } }
+  .sent-icon svg { width: 32px; height: 32px; stroke: var(--green); stroke-width: 2.5; fill: none; }
+  .sent-title { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 8px; }
+  .sent-desc { font-size: 14px; color: var(--gray); margin-bottom: 1.75rem; line-height: 1.6; }
+
+  /* Resultado (visão do monitor) — mantido para uso futuro */
+  .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  @media (max-width: 480px) { .result-grid { grid-template-columns: 1fr; } }
+  .r-card { background: var(--paper); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.1rem; }
+  .r-card.accent { background: var(--brand-tint); border-color: var(--brand-light); }
+  .r-card.full { grid-column: 1 / -1; }
+  .r-label { font-size: 11px; font-weight: 600; color: var(--gray); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 5px; }
+  .r-value { font-size: 24px; font-weight: 700; color: var(--ink); line-height: 1; font-variant-numeric: tabular-nums; }
+  .r-card.accent .r-value { color: var(--brand); }
+  .r-sub { font-size: 12px; color: var(--gray); margin-top: 5px; }
+  .tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 99px; }
+  .tag-ok { background: var(--green-bg); color: var(--green); }
+  .tag-warn { background: var(--yellow-bg); color: var(--yellow); }
+  .tag-bad { background: var(--red-bg); color: var(--red-text); }
+  .analise-block { background: var(--ink); border-radius: 12px; padding: 1.25rem; margin-top: 1rem; }
+  .analise-block h3 { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: .75rem; }
+  .analise-item { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px; }
+  .analise-item:last-child { margin-bottom: 0; }
+  .analise-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--brand); flex-shrink: 0; margin-top: 6px; }
+  .analise-item p { font-size: 13px; color: #C8C8C8; line-height: 1.5; }
+  .action-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 1.5rem; }
+  @media (max-width: 480px) { .action-buttons { grid-template-columns: 1fr; } }
+  .btn-action { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 13px 16px; border-radius: var(--radius); font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: background .15s, transform .08s; }
+  .btn-action:active { transform: translateY(1px); }
+  .btn-whats { background: #25D366; color: #fff; }
+  .btn-whats:hover { background: #1ebe5a; }
+  .btn-pdf { background: var(--ink); color: #fff; }
+  .btn-pdf:hover { background: var(--ink-soft); }
+  .btn-action svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(8px); background: var(--ink); color: #fff; padding: 11px 20px; border-radius: 99px; font-size: 13px; font-weight: 500; opacity: 0; transition: opacity .3s, transform .3s; pointer-events: none; z-index: 999; white-space: nowrap; box-shadow: 0 8px 24px -8px rgba(0,0,0,.4); }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* Aviso de salvamento automático */
+  .save-note { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 11px; color: var(--gray-light); text-align: center; margin-top: 12px; height: 14px; opacity: 0; transition: opacity .3s; }
+  .save-note.show { opacity: 1; }
+  .save-note svg { width: 12px; height: 12px; stroke: var(--green); stroke-width: 2.5; fill: none; }
+
+
+  /* Botao "+ adicionar" e campos extras dinamicos */
+  .btn-add { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; padding: 9px 15px; border-radius: var(--radius); font-size: 13px; font-weight: 600; cursor: pointer; border: 1.5px dashed var(--border-strong); background: var(--surface); color: var(--brand); transition: border-color .15s, background .15s; }
+  .btn-add:hover { border-color: var(--brand); background: var(--brand-tint); }
+  .extra-item { display: grid; grid-template-columns: 1fr 150px 44px; gap: 8px; align-items: end; margin-bottom: 8px; }
+  @media (max-width: 520px) { .extra-item { grid-template-columns: 1fr 44px; } .extra-item .extra-nome { grid-column: 1 / -1; } }
+  .extra-nome { height: 44px; }
+  .extra-remove { width: 44px; height: 44px; border-radius: var(--radius); border: 1.5px solid var(--border-strong); background: var(--surface); color: var(--gray); font-size: 20px; line-height: 1; cursor: pointer; transition: border-color .15s, color .15s, background .15s; }
+  .extra-remove:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-tint); }
+
+  /* Diagnostico */
+  .r-value.big { font-size: 30px; }
+  .path-item { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px; }
+  .path-item:last-child { margin-bottom: 0; }
+  .path-num { flex-shrink: 0; width: 22px; height: 22px; border-radius: 6px; background: var(--brand); color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+  .path-item p { font-size: 13px; color: #C8C8C8; line-height: 1.5; }
+  .path-item b { color: #fff; font-weight: 700; }
+
+  @media print {
+    body { background: #fff; padding: 1rem; }
+    .nav, .action-buttons, .toast, .progress-wrap, .save-note { display: none !important; }
+    .step { display: none !important; }
+    .step.active { display: block !important; animation: none !important; }
+    .btn-add, .extra-remove { display: none !important; }
+    .card { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; margin-bottom: 1rem; }
+    .analise-block { background: #1A1A1A !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+    </div>
+    <div class="header-text">
+      <h1>Diagnóstico Financeiro</h1>
+      <p>Despesas Primárias — Raio-X Inicial &bull; Leva cerca de 5 minutos</p>
+    </div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-steps">
+      <div class="ps active" id="ps0" onclick="goTo(0)"></div>
+      <div class="ps" id="ps1" onclick="goTo(1)"></div>
+      <div class="ps" id="ps2" onclick="goTo(2)"></div>
+      <div class="ps" id="ps3" onclick="goTo(3)"></div>
+      <div class="ps" id="ps4" onclick="goTo(4)"></div>
+    </div>
+    <div class="progress-labels">
+      <span class="active-label" id="pl0" onclick="goTo(0)">Faturamento</span>
+      <span id="pl1" onclick="goTo(1)">Fixas</span>
+      <span id="pl2" onclick="goTo(2)">Variáveis</span>
+      <span id="pl3" onclick="goTo(3)">Projeção</span>
+      <span id="pl4" onclick="goTo(4)">Resultado</span>
+    </div>
+  </div>
+
+  <!-- ETAPA 1: Faturamento -->
+  <div class="card step active" id="step-0">
+    <div class="step-eyebrow">Etapa 1 de 4</div>
+    <div class="step-title">Quanto o seu restaurante fatura?</div>
+    <div class="step-desc">Selecione os canais de venda que o restaurante usa e informe o faturamento bruto mensal de cada um.</div>
+    <div class="tip">💡 Os valores aparecem no extrato do iFood, no relatório do PDV ou no extrato bancário. Use o último mês como referência.</div>
+
+    <div class="field">
+      <div class="field-label">Nome do restaurante <span class="req">*</span></div>
+      <input type="text" id="nome_restaurante" placeholder="Ex: Pizzaria do João">
+      <div class="error-msg" id="err_nome">Informe o nome do restaurante</div>
+    </div>
+
+    <div class="section-head">Canais de venda — responda Sim ou Não para cada canal</div>
+    <div class="canal-toggle">
+
+      <div class="canal-item" id="canal_salao">
+        <div class="canal-header">
+          <span class="canal-name">Salão / balcão</span>
+          <div class="canal-btns">
+            <button type="button" class="canal-btn sim" onclick="escolherCanal('canal_salao', true)">Sim</button>
+            <button type="button" class="canal-btn nao" onclick="escolherCanal('canal_salao', false)">Não</button>
+          </div>
+        </div>
+        <div class="canal-body">
+          <div class="field-label" style="font-size:13px;margin-bottom:6px;">Faturamento mensal <span class="req">*</span></div>
+          <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="fat_salao" placeholder="0,00"></div>
+          <div class="error-msg" id="err_fat_salao">Informe o faturamento do salão</div>
+        </div>
+      </div>
+
+      <div class="canal-item" id="canal_ifood">
+        <div class="canal-header">
+          <span class="canal-name">iFood</span>
+          <div class="canal-btns">
+            <button type="button" class="canal-btn sim" onclick="escolherCanal('canal_ifood', true)">Sim</button>
+            <button type="button" class="canal-btn nao" onclick="escolherCanal('canal_ifood', false)">Não</button>
+          </div>
+        </div>
+        <div class="canal-body">
+          <div class="field-label" style="font-size:13px;margin-bottom:6px;">Faturamento mensal <span class="req">*</span></div>
+          <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="fat_ifood" placeholder="0,00"></div>
+          <div class="error-msg" id="err_fat_ifood">Informe o faturamento do iFood</div>
+        </div>
+      </div>
+
+      <div class="canal-item" id="canal_99">
+        <div class="canal-header">
+          <span class="canal-name">99Food</span>
+          <div class="canal-btns">
+            <button type="button" class="canal-btn sim" onclick="escolherCanal('canal_99', true)">Sim</button>
+            <button type="button" class="canal-btn nao" onclick="escolherCanal('canal_99', false)">Não</button>
+          </div>
+        </div>
+        <div class="canal-body">
+          <div class="field-label" style="font-size:13px;margin-bottom:6px;">Faturamento mensal <span class="req">*</span></div>
+          <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="fat_99" placeholder="0,00"></div>
+          <div class="error-msg" id="err_fat_99">Informe o faturamento do 99Food</div>
+        </div>
+      </div>
+
+      <div class="canal-item" id="canal_keeta">
+        <div class="canal-header">
+          <span class="canal-name">Keeta</span>
+          <div class="canal-btns">
+            <button type="button" class="canal-btn sim" onclick="escolherCanal('canal_keeta', true)">Sim</button>
+            <button type="button" class="canal-btn nao" onclick="escolherCanal('canal_keeta', false)">Não</button>
+          </div>
+        </div>
+        <div class="canal-body">
+          <div class="field-label" style="font-size:13px;margin-bottom:6px;">Faturamento mensal <span class="req">*</span></div>
+          <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="fat_keeta" placeholder="0,00"></div>
+          <div class="error-msg" id="err_fat_keeta">Informe o faturamento do Keeta</div>
+        </div>
+      </div>
+
+      <div class="canal-item" id="canal_proprio">
+        <div class="canal-header">
+          <span class="canal-name">Delivery próprio</span>
+          <div class="canal-btns">
+            <button type="button" class="canal-btn sim" onclick="escolherCanal('canal_proprio', true)">Sim</button>
+            <button type="button" class="canal-btn nao" onclick="escolherCanal('canal_proprio', false)">Não</button>
+          </div>
+        </div>
+        <div class="canal-body">
+          <div class="field-label" style="font-size:13px;margin-bottom:6px;">Faturamento mensal <span class="req">*</span></div>
+          <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="fat_proprio" placeholder="0,00"></div>
+          <div class="error-msg" id="err_fat_proprio">Informe o faturamento do delivery próprio</div>
+        </div>
+      </div>
+
+      <div class="canal-item" id="canal_outros">
+        <div class="canal-header">
+          <span class="canal-name">Outros canais</span>
+          <div class="canal-btns">
+            <button type="button" class="canal-btn sim" onclick="escolherCanal('canal_outros', true)">Sim</button>
+            <button type="button" class="canal-btn nao" onclick="escolherCanal('canal_outros', false)">Não</button>
+          </div>
+        </div>
+        <div class="canal-body">
+          <div class="field-label" style="font-size:13px;margin-bottom:6px;">Faturamento mensal <span class="req">*</span></div>
+          <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="fat_outros" placeholder="0,00"></div>
+          <div class="error-msg" id="err_fat_outros">Informe o faturamento</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="error-msg" id="err_canais" style="font-size:13px;">Responda Sim ou Não para todos os canais antes de continuar</div>
+
+    <div class="field">
+      <div class="field-label">Ticket médio <span class="req">*</span></div>
+      <div class="field-hint">Valor médio gasto por cliente em cada pedido</div>
+      <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="ticket_medio" placeholder="Ex: 45" min="0" style="max-width:200px"></div>
+      <div class="error-msg" id="err_ticket">Informe o ticket médio</div>
+    </div>
+  </div>
+
+  <!-- ETAPA 2: Despesas Fixas -->
+  <div class="card step" id="step-1">
+    <div class="step-eyebrow">Etapa 2 de 4</div>
+    <div class="step-title">Quais são os custos fixos?</div>
+    <div class="step-desc">Gastos que acontecem todo mês, independente das vendas. Deixe em branco os que não se aplicam — uma caixa de justificativa vai aparecer.</div>
+    <div class="tip">💡 Use os boletos e extratos do último mês como referência.</div>
+
+    <div class="section-head">Estrutura e utilidades</div>
+    <div class="field-row">
+      <div class="field">
+        <div class="field-label">Aluguel <span class="req">*</span></div>
+        <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="df_aluguel" placeholder="0" min="0" onblur="checkJustificativa(this,'just_aluguel')"></div>
+        <div class="justificativa-wrap" id="just_aluguel"><div class="justificativa-label">Por que não tem aluguel?</div><textarea placeholder="Ex: imóvel próprio, cedido pelo familiar..."></textarea></div>
+      </div>
+      <div class="field">
+        <div class="field-label">Condomínio</div>
+        <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="df_condominio" placeholder="0" min="0"></div>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <div class="field-label">IPTU</div>
+        <div class="field-hint">Total anual ÷ 12</div>
+        <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="df_iptu" placeholder="0" min="0"></div>
+      </div>
+      <div class="field">
+        <div class="field-label">Energia elétrica <span class="req">*</span></div>
+        <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="df_luz" placeholder="0" min="0" onblur="checkJustificativa(this,'just_luz')"></div>
+        <div class="justificativa-wrap" id="just_luz"><div class="justificativa-label">Por que não tem conta de luz?</div><textarea placeholder="Ex: incluso no condomínio..."></textarea></div>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <div class="field-label">Gás <span class="req">*</span></div>
+        <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="df_gas" placeholder="0" min="0" onblur="checkJustificativa(this,'just_gas')"></div>
+        <div class="justificativa-wrap" id="just_gas"><div class="justificativa-label">Por que não tem gás?</div><textarea placeholder="Ex: cozinha elétrica..."></textarea></div>
+      </div>
+      <div class="field">
+        <div class="field-label">Água</div>
+        <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="df_agua" placeholder="0" min="0"></div>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <div class="field-label">Internet / telefone</div>
+        <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="df_internet" placeholder="0" min="0"></div>
+      </div>
+      <div class="field">
+        <div class="field-label">Dedetização</div>
+        <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="df_dedetizacao" placeholder="0" min="0"></div>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <div class="field-label">Coleta de lixo</div>
+        <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="df_coleta_lixo" placeholder="0" min="0"></div>
+      </div>
+      <div class="field">
+        <div class="field-label">Jardinagem / manutenção</div>
+        <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="df_jardinagem" placeholder="0" min="0"></div>
+      </div>
+    </div>
+
+    <div class="section-head">Equipe</div>
+    <div class="field-row">
+      <div class="field">
+        <div class="field-label">Salários dos funcionários <span class="req">*</span></div>
+        <div class="field-hint">Total da folha, sem encargos</div>
+        <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="df_salarios" placeholder="0" min="0" onblur="checkJustificativa(this,'just_salarios')"></div>
+        <div class="justificativa-wrap" id="just_salarios"><div class="justificativa-label">Por que não tem funcionários?</div><textarea placeholder="Ex: negócio familiar, sem CLT..."></textarea></div>
+      </div>
+      <div class="field">
+        <div class="field-label">Pró-labore</div>
+        <div class="field-hint">Salário do próprio dono</div>
+        <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="df_prolabore" placeholder="0" min="0"></div>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <div class="field-label">INSS</div>
+        <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="df_inss" placeholder="0" min="0"></div>
+      </div>
+      <div class="field">
+        <div class="field-label">FGTS</div>
+        <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="df_fgts" placeholder="0" min="0"></div>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <div class="field-label">Vale transporte</div>
+        <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="df_vale_transporte" placeholder="0" min="0"></div>
+      </div>
+      <div class="field">
+        <div class="field-label">Vale alimentação</div>
+        <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="df_vale_alimentacao" placeholder="0" min="0"></div>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <div class="field-label">Dobras / feriados / bônus</div>
+        <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="df_dobras" placeholder="0" min="0"></div>
+      </div>
+      <div class="field">
+        <div class="field-label">Gasolina / estacionamento</div>
+        <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="df_gasolina" placeholder="0" min="0"></div>
+      </div>
+    </div>
+
+    <div class="section-head">Serviços e sistemas</div>
+    <div class="field-row">
+      <div class="field">
+        <div class="field-label">Contador</div>
+        <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="df_contador" placeholder="0" min="0"></div>
+      </div>
+      <div class="field">
+        <div class="field-label">Advogado</div>
+        <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="df_advogado" placeholder="0" min="0"></div>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <div class="field-label">Sistema de gestão (SAIPOS etc.)</div>
+        <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="df_sistema" placeholder="0" min="0"></div>
+      </div>
+      <div class="field">
+        <div class="field-label">Consultoria</div>
+        <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="df_consultoria" placeholder="0" min="0"></div>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <div class="field-label">Marketing / tráfego pago</div>
+        <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="df_marketing" placeholder="0" min="0"></div>
+      </div>
+      <div class="field">
+        <div class="field-label">Sindicato / Abrasel</div>
+        <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="df_sindicato" placeholder="0" min="0"></div>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <div class="field-label">Mensalidade iFood</div>
+        <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="df_mens_ifood" placeholder="0" min="0"></div>
+      </div>
+      <div class="field">
+        <div class="field-label">Mensalidade 99Food</div>
+        <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="df_mens_99" placeholder="0" min="0"></div>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <div class="field-label">Mensalidade Keeta</div>
+        <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="df_mens_keeta" placeholder="0" min="0"></div>
+      </div>
+      <div class="field">
+        <div class="field-label">Materiais / equipamentos / uniformes</div>
+        <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="df_materiais" placeholder="0" min="0"></div>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <div class="field-label">Empréstimos / financiamentos</div>
+        <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="df_emprestimos" placeholder="0" min="0"></div>
+      </div>
+      <div class="field">
+        <div class="field-label">Outros fixos</div>
+        <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="df_outros" placeholder="0" min="0"></div>
+      </div>
+    </div>
+
+    <div id="extra_fixos"></div>
+    <button type="button" class="btn-add" onclick="addExtra('fixo')">+ adicionar outro gasto fixo</button>
+  </div>
+
+  <!-- ETAPA 3: Variáveis e CMV -->
+  <div class="card step" id="step-2">
+    <div class="step-eyebrow">Etapa 3 de 4</div>
+    <div class="step-title">Custos variáveis e mercadoria</div>
+    <div class="step-desc">Esses custos aumentam conforme as vendas crescem.</div>
+
+    <div class="section-head">Despesas variáveis</div>
+    <div class="field-row">
+      <div class="field"><div class="field-label">Embalagens</div><div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="dv_embalagens" placeholder="0" min="0"></div></div>
+      <div class="field"><div class="field-label">Comissão de funcionários</div><div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="dv_comissao" placeholder="0" min="0"></div></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><div class="field-label">Taxa máquina de cartão</div><div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="dv_cartao" placeholder="0" min="0"></div></div>
+      <div class="field"><div class="field-label">Comissão iFood</div><div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="dv_taxa_ifood" placeholder="0" min="0"></div></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><div class="field-label">Comissão 99Food</div><div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="dv_taxa_99" placeholder="0" min="0"></div></div>
+      <div class="field"><div class="field-label">Comissão Keeta</div><div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="dv_taxa_keeta" placeholder="0" min="0"></div></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><div class="field-label">Motoboy / entregador</div><div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="dv_motoboy" placeholder="0" min="0"></div></div>
+      <div class="field"><div class="field-label">Material de limpeza</div><div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="dv_limpeza" placeholder="0" min="0"></div></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><div class="field-label">Material de escritório</div><div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="dv_escritorio" placeholder="0" min="0"></div></div>
+      <div class="field"><div class="field-label">Despesas bancárias</div><div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="dv_bancarias" placeholder="0" min="0"></div></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><div class="field-label">Simples Nacional</div><div class="field-hint">Imposto mensal aproximado</div><div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="dv_simples" placeholder="0" min="0"></div></div>
+      <div class="field"><div class="field-label">Promoções delivery</div><div class="field-hint">Cupons, frete grátis, campanhas</div><div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="dv_promocoes" placeholder="0" min="0"></div></div>
+    </div>
+    <div class="field"><div class="field-label">Outros variáveis</div><div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="dv_outros" placeholder="0" min="0" style="max-width:300px"></div></div>
+
+    <div id="extra_variaveis"></div>
+    <button type="button" class="btn-add" onclick="addExtra('variavel')">+ adicionar outro custo variável</button>
+
+    <div class="section-head">Custo de Mercadoria Vendida (CMV)</div>
+    <div class="tip">💡 O CMV é o custo dos ingredientes e bebidas usados para produzir tudo que foi vendido no mês. Aparece nas notas fiscais de compra.</div>
+    <div class="field-row">
+      <div class="field">
+        <div class="field-label">Custo com alimentos <span class="req">*</span></div>
+        <div class="field-hint">Ingredientes e insumos da cozinha</div>
+        <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="cmv_alimentos" placeholder="0" min="0" onblur="checkJustificativa(this,'just_cmv')"></div>
+        <div class="justificativa-wrap" id="just_cmv"><div class="justificativa-label">Por que não tem custo com alimentos?</div><textarea placeholder="Ex: ainda não tenho esse controle..."></textarea></div>
+      </div>
+      <div class="field">
+        <div class="field-label">Custo com bebidas</div>
+        <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="cmv_bebidas" placeholder="0" min="0"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ETAPA 4: Projeção -->
+  <div class="card step" id="step-3">
+    <div class="step-eyebrow">Etapa 4 de 4</div>
+    <div class="step-title">Qual é a sua meta de lucro?</div>
+    <div class="step-desc">Com os dados preenchidos, agora você pode simular quanto o restaurante precisa faturar para atingir o lucro que deseja.</div>
+
+    <div class="field">
+      <div class="field-label">Lucro desejado por mês <span class="req">*</span></div>
+      <div class="field-hint">Sempre em reais (R$), nunca em porcentagem. Por exemplo: R$ 8.000.</div>
+      <div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" id="lucro_desejado" placeholder="Ex: 5000" min="0"></div>
+      <div class="error-msg" id="err_lucro">Informe o lucro desejado</div>
+    </div>
+
+    <div id="proj_resultado" style="display:none">
+      <div class="section-head">Sua projeção</div>
+      <div class="proj-card">
+        <div class="proj-label">Para lucrar o valor desejado, o restaurante precisa faturar:</div>
+        <div class="proj-result" id="proj_fat_necessario">R$ 0</div>
+        <div class="proj-label" id="proj_desc"></div>
+      </div>
+      <div class="field-row" style="margin-top:12px">
+        <div class="proj-card">
+          <div class="proj-label">Faturamento semanal necessário</div>
+          <div class="proj-result" style="font-size:20px" id="proj_semanal">R$ 0</div>
+        </div>
+        <div class="proj-card">
+          <div class="proj-label">Pedidos/mês necessários</div>
+          <div class="proj-result" style="font-size:20px" id="proj_pedidos">—</div>
+          <div class="proj-label" id="proj_pedidos_sub"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tip" style="margin-top:16px;">💡 A sua meta de lucro entra somada à despesa fixa no cálculo do ponto de equilíbrio. É por isso que o faturamento necessário sobe quando você aumenta a meta.</div>
+
+    <div class="divider"></div>
+    <p style="font-size:14px;color:var(--gray);line-height:1.6;">Na próxima etapa você verá o <strong>diagnóstico completo</strong> do restaurante. Ao enviar, ele também vai para o seu monitor, que discute os resultados e os próximos passos com você.</p>
+  </div>
+
+  <!-- ETAPA 5: Diagnóstico (Resultado) -->
+  <div class="card step" id="step-4">
+    <div class="step-eyebrow">Diagnóstico financeiro</div>
+    <div class="step-title" id="diag_titulo">Raio-X do restaurante</div>
+    <div class="step-desc">Uma leitura da situação atual com base nos números que você preencheu. Os valores são uma referência para orientar decisões, não uma garantia de resultado.</div>
+    <div id="diag_conteudo"></div>
+  </div>
+
+  <!-- ETAPA 6: Confirmação (aluno) -->
+  <div class="card step" id="step-5">
+    <div class="sent-screen">
+      <div class="sent-icon">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="sent-title">Dados enviados com sucesso!</div>
+      <div class="sent-desc">O seu monitor já pode acessar o diagnóstico completo do restaurante. Em breve ele entrará em contato para discutir os resultados e os próximos passos.</div>
+      <button class="btn-action btn-whats" style="max-width:300px;margin:0 auto;" onclick="enviarWhatsApp()">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.558 4.17 1.535 5.943L.057 23.571a.5.5 0 00.372.429l6.079-1.595A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.8 9.8 0 01-5.031-1.388l-.36-.214-3.733.979 1.003-3.645-.235-.374A9.818 9.818 0 1112 21.818z"/></svg>
+        Também enviar pelo WhatsApp
+      </button>
+    </div>
+  </div>
+
+  <div class="nav">
+    <button class="btn" id="btn-back" onclick="navigate(-1)" disabled>← Voltar</button>
+    <span class="nav-counter" id="nav-counter">1 de 4</span>
+    <button class="btn btn-primary" id="btn-next" onclick="navigate(1)">Próximo →</button>
+  </div>
+
+  <div class="save-note" id="save-note"></div>
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+var current = 0;
+var total = 6;
+
+window.addEventListener('load', function() {
+  initMoneyInputs();
+  attachAutosave();
+  if (window.location.search.indexOf('enviado=1') !== -1) {
+    limparEstado();
+    applyStep(5);
+  } else {
+    restaurarEstado();
+  }
+});
+
+/* ---------- Helpers de dinheiro ---------- */
+function parseMoneyStr(v) { return parseFloat(String(v == null ? '' : v).replace(/\./g, '').replace(',', '.')) || 0; }
+function n(id) { var el = document.getElementById(id); return el ? parseMoneyStr(el.value) : 0; }
+
+function formatMoney(input) {
+  var raw = input.value.replace(/\D/g, '');
+  if (!raw) { input.value = ''; return; }
+  var num = parseInt(raw, 10) / 100;
+  input.value = num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function initMoneyInputs() {
+  var inputs = document.querySelectorAll('input[inputmode="numeric"]');
+  for (var i = 0; i < inputs.length; i++) {
+    inputs[i].addEventListener('input', function() { formatMoney(this); this.classList.remove('error'); calcProjecao(); });
+    if (inputs[i].placeholder.indexOf('Ex') === -1) inputs[i].placeholder = '0,00';
+  }
+}
+
+function fmt(v) { return 'R$ ' + Math.round(v).toLocaleString('pt-BR'); }
+function fmtPct(v) { return (Math.round(v * 10) / 10).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%'; }
+
+function tag(txt, type) { return '<span class="tag tag-' + type + '">' + txt + '</span>'; }
+
+function mostrarToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 3000);
+}
+
+function escolherCanal(id, temCanal) {
+  var el = document.getElementById(id);
+  el.classList.remove('sim', 'nao');
+  el.classList.add(temCanal ? 'sim' : 'nao');
+  el.dataset.respondido = '1';
+  var errCanais = document.getElementById('err_canais');
+  if (errCanais) errCanais.classList.remove('show');
+  salvarEstado();
+}
+
+function checkJustificativa(input, wrapId) {
+  var wrap = document.getElementById(wrapId);
+  if (!wrap) return;
+  if (!input.value || parseFloat(input.value) === 0) { wrap.classList.add('show'); }
+  else { wrap.classList.remove('show'); }
+  reservarEspacoJust(wrap);
+}
+
+/* No desktop a justificativa e absoluta; reservamos o espaco abaixo da linha para nada sobrepor. No mobile ela fica no fluxo e nao precisa de reserva. */
+function reservarEspacoJust(wrap) {
+  var row = wrap.closest ? wrap.closest('.field-row') : null;
+  if (!row) return;
+  var justs = row.querySelectorAll('.justificativa-wrap.show');
+  var max = 0, absoluta = false;
+  for (var i = 0; i < justs.length; i++) {
+    if (getComputedStyle(justs[i]).position === 'absolute') {
+      absoluta = true;
+      var h = justs[i].offsetHeight;
+      if (h > max) max = h;
+    }
+  }
+  row.style.marginBottom = (absoluta && max > 0) ? (max + 18) + 'px' : '';
+}
+
+/* ---------- Campos extras dinamicos ---------- */
+function addExtra(tipo, nome, valor) {
+  var contId = tipo === 'fixo' ? 'extra_fixos' : 'extra_variaveis';
+  var cont = document.getElementById(contId);
+  if (!cont) return null;
+  var ph = tipo === 'fixo' ? 'Ex: aluguel de equipamento' : 'Ex: taxa de aplicativo';
+  var row = document.createElement('div');
+  row.className = 'extra-item';
+  row.innerHTML =
+    '<input type="text" class="extra-nome" placeholder="' + ph + '">' +
+    '<div class="input-wrap"><span class="prefix">R$</span><input type="text" inputmode="numeric" class="extra-valor" placeholder="0,00"></div>' +
+    '<button type="button" class="extra-remove" title="Remover" aria-label="Remover este item">&times;</button>';
+  cont.appendChild(row);
+  var nomeInput = row.querySelector('.extra-nome');
+  var valorInput = row.querySelector('.extra-valor');
+  var rmBtn = row.querySelector('.extra-remove');
+  valorInput.addEventListener('input', function() { formatMoney(this); salvarEstado(); });
+  nomeInput.addEventListener('input', salvarEstado);
+  rmBtn.addEventListener('click', function() { row.parentNode.removeChild(row); salvarEstado(); });
+  if (nome) nomeInput.value = nome;
+  if (valor) valorInput.value = valor;
+  if (!nome && !valor) nomeInput.focus();
+  salvarEstado();
+  return row;
+}
+
+function sumExtras(tipo) {
+  var cont = document.getElementById(tipo === 'fixo' ? 'extra_fixos' : 'extra_variaveis');
+  if (!cont) return 0;
+  var ins = cont.querySelectorAll('.extra-valor');
+  var s = 0;
+  for (var i = 0; i < ins.length; i++) s += parseMoneyStr(ins[i].value);
+  return s;
+}
+
+/* ---------- Somas e indicadores ---------- */
+function somaDF() {
+  return n('df_aluguel') + n('df_condominio') + n('df_iptu') + n('df_luz') + n('df_gas') + n('df_agua') +
+         n('df_internet') + n('df_dedetizacao') + n('df_coleta_lixo') + n('df_jardinagem') +
+         n('df_salarios') + n('df_prolabore') + n('df_inss') + n('df_fgts') +
+         n('df_vale_transporte') + n('df_vale_alimentacao') + n('df_dobras') + n('df_gasolina') +
+         n('df_contador') + n('df_advogado') + n('df_sistema') + n('df_consultoria') +
+         n('df_marketing') + n('df_sindicato') + n('df_mens_ifood') + n('df_mens_99') + n('df_mens_keeta') +
+         n('df_materiais') + n('df_emprestimos') + n('df_outros') + sumExtras('fixo');
+}
+function somaDV() {
+  return n('dv_embalagens') + n('dv_comissao') + n('dv_cartao') + n('dv_taxa_ifood') + n('dv_taxa_99') +
+         n('dv_taxa_keeta') + n('dv_motoboy') + n('dv_limpeza') + n('dv_escritorio') +
+         n('dv_bancarias') + n('dv_simples') + n('dv_promocoes') + n('dv_outros') + sumExtras('variavel');
+}
+
+function canaisAtivos() {
+  var ids = ['canal_salao','canal_ifood','canal_99','canal_keeta','canal_proprio','canal_outros'];
+  var ativos = [];
+  for (var i = 0; i < ids.length; i++) {
+    if (document.getElementById(ids[i]).classList.contains('sim')) ativos.push(ids[i]);
+  }
+  return ativos;
+}
+
+function todosCanaisRespondidos() {
+  var ids = ['canal_salao','canal_ifood','canal_99','canal_keeta','canal_proprio','canal_outros'];
+  for (var i = 0; i < ids.length; i++) {
+    if (!document.getElementById(ids[i]).dataset.respondido) return false;
+  }
+  return true;
+}
+
+function getFaturamento() {
+  var total = 0;
+  var canais = canaisAtivos();
+  var map = {'canal_salao':'fat_salao','canal_ifood':'fat_ifood','canal_99':'fat_99','canal_keeta':'fat_keeta','canal_proprio':'fat_proprio','canal_outros':'fat_outros'};
+  for (var i = 0; i < canais.length; i++) total += n(map[canais[i]]);
+  return total;
+}
+
+function calcIndicadores() {
+  var F = getFaturamento();
+  var CMV = n('cmv_alimentos') + n('cmv_bebidas');
+  var DF = somaDF();
+  var DV = somaDV();
+  var L = n('lucro_desejado');
+  var mcFrac = F > 0 ? (F - CMV - DV) / F : 0;
+  var lucroAtual = F - CMV - DV - DF;
+  return {
+    F: F, CMV: CMV, DV: DV, DF: DF, L: L,
+    cmvPct: F > 0 ? CMV / F * 100 : 0,
+    dvPct: F > 0 ? DV / F * 100 : 0,
+    dfPct: F > 0 ? DF / F * 100 : 0,
+    mcPct: mcFrac * 100, mcFrac: mcFrac,
+    lucroAtual: lucroAtual, lucroPct: F > 0 ? lucroAtual / F * 100 : 0,
+    peAtual: mcFrac > 0 ? DF / mcFrac : 0,
+    peMeta: mcFrac > 0 ? (DF + L) / mcFrac : 0
+  };
+}
+
+/* ---------- Validacao ---------- */
+function validarEtapa(idx) {
+  var ok = true;
+  if (idx === 0) {
+    var nome = document.getElementById('nome_restaurante').value.trim();
+    if (!nome) { document.getElementById('err_nome').classList.add('show'); ok = false; }
+    else { document.getElementById('err_nome').classList.remove('show'); }
+    if (!todosCanaisRespondidos()) { document.getElementById('err_canais').classList.add('show'); ok = false; }
+    else { document.getElementById('err_canais').classList.remove('show'); }
+    var ativos = canaisAtivos();
+    var map = {'canal_salao':'fat_salao','canal_ifood':'fat_ifood','canal_99':'fat_99','canal_keeta':'fat_keeta','canal_proprio':'fat_proprio','canal_outros':'fat_outros'};
+    for (var i = 0; i < ativos.length; i++) {
+      var inputId = map[ativos[i]];
+      var errId = 'err_' + inputId;
+      if (n(inputId) <= 0) { document.getElementById(errId).classList.add('show'); ok = false; }
+      else { document.getElementById(errId).classList.remove('show'); }
+    }
+    if (n('ticket_medio') <= 0) { document.getElementById('err_ticket').classList.add('show'); ok = false; }
+    else { document.getElementById('err_ticket').classList.remove('show'); }
+  }
+  if (idx === 1) { ok = validarComJustificativa(['df_aluguel','df_luz','df_gas','df_salarios']) && ok; }
+  if (idx === 2) { ok = validarComJustificativa(['cmv_alimentos']) && ok; }
+  if (idx === 3) {
+    if (n('lucro_desejado') <= 0) { document.getElementById('err_lucro').classList.add('show'); ok = false; }
+    else { document.getElementById('err_lucro').classList.remove('show'); }
+  }
+  return ok;
+}
+
+var justMap = { df_aluguel:'just_aluguel', df_luz:'just_luz', df_gas:'just_gas', df_salarios:'just_salarios', cmv_alimentos:'just_cmv' };
+function validarComJustificativa(ids) {
+  var ok = true;
+  for (var i = 0; i < ids.length; i++) {
+    var id = ids[i];
+    var input = document.getElementById(id);
+    var wrap = document.getElementById(justMap[id]);
+    var ta = wrap ? wrap.querySelector('textarea') : null;
+    var temValor = n(id) > 0;
+    var temJust = ta && ta.value.trim().length > 0;
+    if (!temValor && !temJust) {
+      if (wrap) { wrap.classList.add('show'); reservarEspacoJust(wrap); }
+      if (input) input.classList.add('error');
+      ok = false;
+    } else if (input) { input.classList.remove('error'); }
+  }
+  return ok;
+}
+
+function scrollToError() {
+  var el = document.querySelector('.step.active .error-msg.show, .step.active input.error, .step.active .justificativa-wrap.show');
+  if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+/* ---------- Projecao (etapa 4) ---------- */
+function calcProjecao() {
+  var fat = getFaturamento();
+  var ticket = n('ticket_medio');
+  var lucro_desejado = n('lucro_desejado');
+  if (lucro_desejado <= 0) { document.getElementById('proj_resultado').style.display = 'none'; return; }
+  var df = somaDF(), dv = somaDV(), cmv = n('cmv_alimentos') + n('cmv_bebidas');
+  var mc_pct = fat > 0 ? (fat - cmv - dv) / fat * 100 : 0;
+  var fat_necessario = mc_pct > 0 ? (df + lucro_desejado) / (mc_pct / 100) : 0;
+  var pedidos = ticket > 0 && fat_necessario > 0 ? Math.ceil(fat_necessario / ticket) : 0;
+  document.getElementById('proj_resultado').style.display = 'block';
+  document.getElementById('proj_fat_necessario').textContent = fmt(fat_necessario);
+  document.getElementById('proj_semanal').textContent = fmt(fat_necessario / 4.3);
+  document.getElementById('proj_pedidos').textContent = pedidos > 0 ? pedidos.toLocaleString('pt-BR') + ' pedidos' : '—';
+  document.getElementById('proj_pedidos_sub').textContent = ticket > 0 ? 'Com ticket médio de ' + fmt(ticket) : 'Preencha o ticket médio';
+  if (fat_necessario > 0 && fat > 0) {
+    var diff = fat - fat_necessario;
+    document.getElementById('proj_desc').textContent = diff >= 0 ? 'Faturamento atual está ' + fmt(diff) + ' acima da meta' : 'Faturamento atual está ' + fmt(Math.abs(diff)) + ' abaixo da meta';
+  }
+}
+
+/* ---------- Diagnostico (etapa 5) ---------- */
+function pillCMV(p) { return p <= 30 ? 'ok' : (p <= 35 ? 'warn' : 'bad'); }
+function pillDV(p) { return p <= 25 ? 'ok' : (p <= 30 ? 'warn' : 'bad'); }
+function pillDF(p) { return p <= 30 ? 'ok' : (p <= 38 ? 'warn' : 'bad'); }
+function pillMC(p) { return p >= 40 ? 'ok' : (p >= 30 ? 'warn' : 'bad'); }
+function pillLucro(p) { return p >= 8 ? 'ok' : (p >= 0 ? 'warn' : 'bad'); }
+
+function pill(status, kind) {
+  var map;
+  if (kind === 'mc') map = { ok:'boa', warn:'atenção', bad:'baixa' };
+  else if (kind === 'lucro') map = { ok:'saudável', warn:'apertado', bad:'prejuízo' };
+  else map = { ok:'dentro', warn:'atenção', bad:'alto' };
+  return '<span class="tag tag-' + status + '">' + map[status] + '</span>';
+}
+
+function indicadorCard(label, valor, pillHtml) {
+  return '<div class="r-card"><div class="r-label">' + label + '</div><div class="r-value">' + valor + '</div>' +
+         (pillHtml ? '<div class="r-sub">' + pillHtml + '</div>' : '') + '</div>';
+}
+
+function caminho(num, texto) {
+  return '<div class="path-item"><div class="path-num">' + num + '</div><p>' + texto + '</p></div>';
+}
+
+function renderDiagnostico() {
+  var nome = (document.getElementById('nome_restaurante').value || 'seu restaurante').trim();
+  document.getElementById('diag_titulo').textContent = 'Raio-X de ' + nome;
+  var cont = document.getElementById('diag_conteudo');
+  var d = calcIndicadores();
+
+  if (d.F <= 0) {
+    cont.innerHTML = '<div class="proj-card"><div class="proj-label">Preencha o faturamento e os custos nas etapas anteriores para gerar o diagnóstico completo.</div></div>';
+    return;
+  }
+
+  var html = '';
+
+  if (d.mcFrac > 0) {
+    html += '<div class="section-head" style="margin-top:0;">Ponto de equilíbrio</div>';
+    html += '<div class="r-card full accent" style="margin-bottom:14px;">' +
+            '<div class="r-label">Ponto de equilíbrio atual (sem meta)</div>' +
+            '<div class="r-value big">' + fmt(d.peAtual) + '</div>' +
+            '<div class="r-sub">Faturamento mínimo por mês para cobrir todos os custos e não ter prejuízo. Hoje o restaurante fatura ' + fmt(d.F) + '.</div>' +
+            '</div>';
+    if (d.L > 0) {
+      html += '<div class="proj-card" style="margin-bottom:16px;"><div class="proj-label">Incluindo a meta de lucro de <b>' + fmt(d.L) + '</b>, o ponto de equilíbrio sobe para <b style="color:var(--brand)">' + fmt(d.peMeta) + '</b>. A meta entra somada à despesa fixa no cálculo, por isso o número necessário aumenta.</div></div>';
+    }
+  } else {
+    html += '<div class="r-card full accent" style="margin-bottom:14px;"><div class="r-label">Margem de contribuição</div><div class="r-value big">' + fmtPct(d.mcPct) + '</div><div class="r-sub">Com os custos atuais, cada venda não cobre o próprio custo de mercadoria e as despesas variáveis. O primeiro passo sugerido é reduzir CMV e despesas variáveis antes de olhar o ponto de equilíbrio.</div></div>';
+  }
+
+  html += '<div class="section-head">Indicadores atuais</div>';
+  html += '<div class="result-grid">';
+  html += indicadorCard('CMV', fmtPct(d.cmvPct), pill(pillCMV(d.cmvPct)));
+  html += indicadorCard('Despesa variável', fmtPct(d.dvPct), pill(pillDV(d.dvPct)));
+  html += indicadorCard('Despesa fixa', fmtPct(d.dfPct), pill(pillDF(d.dfPct)));
+  html += indicadorCard('Margem de contribuição', fmtPct(d.mcPct), pill(pillMC(d.mcPct), 'mc'));
+  html += indicadorCard('Lucro atual', fmtPct(d.lucroPct), pill(pillLucro(d.lucroPct), 'lucro'));
+  html += indicadorCard('Lucro em R$', fmt(d.lucroAtual), '');
+  html += '</div>';
+
+  html += '<div class="analise-block"><h3>SUGESTÃO</h3>';
+
+  var casc = [];
+  if (d.cmvPct > 30) casc.push('O CMV está em ' + fmtPct(d.cmvPct) + '. Acima de 30% costuma apertar a margem. Uma frente possível é revisar ficha técnica, porcionamento e negociação de compras.');
+  if (d.dvPct > 30) casc.push('As despesas variáveis estão em ' + fmtPct(d.dvPct) + '. Acima de 30% pesam bastante no resultado. Vale olhar taxas de aplicativo, comissões, maquininha e embalagens.');
+  if (d.cmvPct <= 25 && d.dvPct <= 25) casc.push('CMV e despesas variáveis estão controlados. Se o lucro ainda aperta, o ponto de atenção tende a estar na despesa fixa alta ou no faturamento abaixo do necessário.');
+  if (casc.length === 0) casc.push('Os indicadores estão próximos das referências. O ajuste fino tende a estar no equilíbrio entre faturamento e despesa fixa.');
+  for (var c = 0; c < casc.length; c++) html += '<div class="analise-item"><div class="analise-dot"></div><p>' + casc[c] + '</p></div>';
+
+  if (d.L > 0 && d.mcFrac > 0) {
+    if (d.lucroAtual >= d.L) {
+      html += '<div class="analise-item"><div class="analise-dot"></div><p>Com os números atuais, o lucro estimado (' + fmt(d.lucroAtual) + ') já alcança a meta de ' + fmt(d.L) + '. A sugestão é manter o controle dos indicadores para preservar essa folga.</p></div>';
+    } else {
+      var cmvAlvo = d.F - d.DV - d.DF - d.L;
+      var dvAlvo = d.F - d.CMV - d.DF - d.L;
+      var fatAlvo = (d.DF + d.L) / d.mcFrac;
+      html += '<div style="height:12px"></div>';
+      html += '<p style="font-size:12px;font-weight:700;letter-spacing:.06em;color:#9A9A96;text-transform:uppercase;margin-bottom:10px;">Caminhos para chegar na meta de ' + fmt(d.L) + '</p>';
+      if (cmvAlvo >= 0) html += caminho(1, 'Reduzir o CMV para cerca de <b>' + fmt(cmvAlvo) + '</b> (uma queda de <b>' + fmt(d.CMV - cmvAlvo) + '</b> no mês), mantendo o resto igual.');
+      else html += caminho(1, 'Só reduzir o CMV não seria suficiente para a meta neste cenário. A sugestão é combinar com as outras frentes abaixo.');
+      if (dvAlvo >= 0) html += caminho(2, 'Reduzir as despesas variáveis para cerca de <b>' + fmt(dvAlvo) + '</b> (uma queda de <b>' + fmt(d.DV - dvAlvo) + '</b> no mês), mantendo o resto igual.');
+      else html += caminho(2, 'Só reduzir as despesas variáveis não seria suficiente para a meta neste cenário. Vale combinar com as outras frentes.');
+      html += caminho(3, 'Aumentar o faturamento para cerca de <b>' + fmt(fatAlvo) + '</b> (um aumento de <b>' + fmt(fatAlvo - d.F) + '</b> no mês), mantendo a mesma estrutura de custos.');
+      html += '<div style="height:8px"></div><p style="font-size:12px;color:#9A9A96;line-height:1.5;">Os três caminhos são alternativas, não etapas somadas. Os valores são uma referência para orientar a conversa com o seu monitor, não uma garantia de resultado.</p>';
+    }
+  }
+
+  html += '</div>';
+
+  html += '<div class="action-buttons" style="grid-template-columns:1fr;"><button class="btn-action btn-pdf" onclick="window.print()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> Salvar ou imprimir diagnóstico</button></div>';
+
+  cont.innerHTML = html;
+}
+
+/* ---------- Resumo em texto (monitor) ---------- */
+function getResumoTexto() {
+  var nome = document.getElementById('nome_restaurante').value || 'Restaurante';
+  var data = new Date().toLocaleDateString('pt-BR');
+  var fat = getFaturamento(), ticket = n('ticket_medio'), L = n('lucro_desejado');
+  var df = somaDF(), dv = somaDV(), cmv = n('cmv_alimentos') + n('cmv_bebidas');
+  var mcFrac = fat > 0 ? (fat - cmv - dv) / fat : 0;
+  var mc_pct = mcFrac * 100;
+  var peAtual = mcFrac > 0 ? df / mcFrac : 0;
+  var peMeta = mcFrac > 0 ? (df + L) / mcFrac : 0;
+  var lucroAtual = fat - df - dv - cmv;
+  var cmvPct = fat > 0 ? cmv / fat * 100 : 0, dvPct = fat > 0 ? dv / fat * 100 : 0, dfPct = fat > 0 ? df / fat * 100 : 0, lucroPct = fat > 0 ? lucroAtual / fat * 100 : 0;
+  function pctTxt(v) { return v.toFixed(1).replace('.', ',') + '%'; }
+
+  var canaisStr = canaisAtivos().map(function(cc) {
+    var map = {'canal_salao':'Salao','canal_ifood':'iFood','canal_99':'99Food','canal_keeta':'Keeta','canal_proprio':'Delivery proprio','canal_outros':'Outros'};
+    var fatMap = {'canal_salao':'fat_salao','canal_ifood':'fat_ifood','canal_99':'fat_99','canal_keeta':'fat_keeta','canal_proprio':'fat_proprio','canal_outros':'fat_outros'};
+    return map[cc] + ': ' + fmt(n(fatMap[cc]));
+  }).join(', ');
+
+  var linhas = [];
+  linhas.push('DIAGNOSTICO FINANCEIRO: ' + nome.toUpperCase());
+  linhas.push('Data: ' + data);
+  linhas.push('');
+  linhas.push('FATURAMENTO');
+  linhas.push(canaisStr);
+  linhas.push('Total: ' + fmt(fat));
+  linhas.push('Ticket medio: ' + fmt(ticket));
+  linhas.push('');
+  linhas.push('CUSTOS');
+  linhas.push('Despesas fixas: ' + fmt(df) + ' (' + pctTxt(dfPct) + ')');
+  linhas.push('Despesas variaveis: ' + fmt(dv) + ' (' + pctTxt(dvPct) + ')');
+  linhas.push('CMV: ' + fmt(cmv) + ' (' + pctTxt(cmvPct) + ')');
+  linhas.push('');
+  linhas.push('INDICADORES');
+  linhas.push('Margem de contribuicao: ' + pctTxt(mc_pct));
+  linhas.push('Lucro atual estimado: ' + fmt(lucroAtual) + ' (' + pctTxt(lucroPct) + ')');
+  linhas.push('Ponto de equilibrio atual: ' + fmt(peAtual));
+  linhas.push('Meta de lucro: ' + fmt(L));
+  linhas.push('Ponto de equilibrio com a meta: ' + fmt(peMeta));
+
+  if (L > 0 && mcFrac > 0 && lucroAtual < L) {
+    var cmvAlvo = fat - dv - df - L, dvAlvo = fat - cmv - df - L, fatAlvo = (df + L) / mcFrac;
+    linhas.push('');
+    linhas.push('CAMINHOS PARA A META (alternativas)');
+    linhas.push('1) Reduzir CMV para ' + (cmvAlvo >= 0 ? fmt(cmvAlvo) + ' (queda de ' + fmt(cmv - cmvAlvo) + ')' : 'insuficiente sozinho'));
+    linhas.push('2) Reduzir despesas variaveis para ' + (dvAlvo >= 0 ? fmt(dvAlvo) + ' (queda de ' + fmt(dv - dvAlvo) + ')' : 'insuficiente sozinho'));
+    linhas.push('3) Aumentar faturamento para ' + fmt(fatAlvo) + ' (aumento de ' + fmt(fatAlvo - fat) + ')');
+  }
+  return linhas.join('\n');
+}
+
+function enviarWhatsApp() {
+  var txt = getResumoTexto();
+  window.open('https://wa.me/?text=' + encodeURIComponent(txt), '_blank');
+}
+
+/* ---------- Navegacao ---------- */
+function applyStep(idx) {
+  var steps = document.querySelectorAll('.step');
+  for (var i = 0; i < steps.length; i++) steps[i].classList.toggle('active', i === idx);
+  var ps = document.querySelectorAll('.ps');
+  for (var p = 0; p < ps.length; p++) { ps[p].classList.toggle('active', p === idx); ps[p].classList.toggle('done', p < idx); }
+  var pl = document.querySelectorAll('.progress-labels span');
+  for (var q = 0; q < pl.length; q++) pl[q].classList.toggle('active-label', q === idx);
+  current = idx;
+  var back = document.getElementById('btn-back');
+  var next = document.getElementById('btn-next');
+  if (current >= total - 1) { back.style.display = 'none'; next.style.display = 'none'; }
+  else {
+    back.style.display = '';
+    back.disabled = current === 0;
+    next.style.display = '';
+    next.disabled = false;
+    if (current === total - 2) next.textContent = 'Enviar ao monitor →';
+    else if (current === total - 3) next.textContent = 'Ver diagnóstico →';
+    else next.textContent = 'Próximo →';
+  }
+  var counter = ['1 de 4', '2 de 4', '3 de 4', '4 de 4', 'Diagnóstico', ''];
+  document.getElementById('nav-counter').textContent = counter[current] || '';
+  if (current === 3) calcProjecao();
+  if (current === 4) renderDiagnostico();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function navigate(dir) {
+  salvarEstadoAgora();
+  if (dir === 1 && !validarEtapa(current)) { scrollToError(); return; }
+  if (current === total - 2 && dir === 1) { submeterFormulario(); return; }
+  var idx = Math.max(0, Math.min(total - 1, current + dir));
+  applyStep(idx);
+}
+
+function goTo(index) {
+  if (index >= total - 1) return;
+  salvarEstadoAgora();
+  applyStep(index);
+}
+
+function submeterFormulario() {
+  var nome = document.getElementById('nome_restaurante').value || 'Restaurante';
+  var txt = getResumoTexto();
+  var form = document.createElement('form');
+  form.method = 'POST';
+  form.action = 'https://formsubmit.co/matheus.arruda@grupomindhub.com';
+  form.style.display = 'none';
+  var campos = {
+    '_subject': 'Diagnostico Financeiro: ' + nome,
+    '_captcha': 'false',
+    '_template': 'table',
+    '_next': window.location.href.split('?')[0] + '?enviado=1',
+    'Restaurante': nome,
+    'Dados': txt
+  };
+  for (var k in campos) {
+    var input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = k;
+    input.value = campos[k];
+    form.appendChild(input);
+  }
+  document.body.appendChild(form);
+  form.submit();
+}
+
+/* ---------- Salvamento automatico (localStorage, com fallback seguro) ---------- */
+var STORAGE_KEY = 'mindhub_diag_v1';
+var _saveDebounce;
+
+function coletarEstado() {
+  var estado = { campos: {}, canais: {}, just: {}, extras: { fixo: [], variavel: [] } };
+  var inputs = document.querySelectorAll('input[type=text]');
+  for (var i = 0; i < inputs.length; i++) { if (inputs[i].id && inputs[i].value) estado.campos[inputs[i].id] = inputs[i].value; }
+  var canais = ['canal_salao','canal_ifood','canal_99','canal_keeta','canal_proprio','canal_outros'];
+  for (var j = 0; j < canais.length; j++) {
+    var el = document.getElementById(canais[j]);
+    if (!el) continue;
+    if (el.classList.contains('sim')) estado.canais[canais[j]] = 'sim';
+    else if (el.classList.contains('nao')) estado.canais[canais[j]] = 'nao';
+  }
+  var wraps = document.querySelectorAll('.justificativa-wrap');
+  for (var k = 0; k < wraps.length; k++) {
+    var ta = wraps[k].querySelector('textarea');
+    if (ta && ta.value) estado.just[wraps[k].id] = ta.value;
+  }
+  var tipos = ['fixo', 'variavel'];
+  for (var t = 0; t < tipos.length; t++) {
+    var cont = document.getElementById(tipos[t] === 'fixo' ? 'extra_fixos' : 'extra_variaveis');
+    if (!cont) continue;
+    var items = cont.querySelectorAll('.extra-item');
+    for (var it = 0; it < items.length; it++) {
+      var nm = items[it].querySelector('.extra-nome');
+      var vl = items[it].querySelector('.extra-valor');
+      estado.extras[tipos[t]].push({ nome: nm ? nm.value : '', valor: vl ? vl.value : '' });
+    }
+  }
+  return estado;
+}
+
+function _doSave() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(coletarEstado()));
+    var note = document.getElementById('save-note');
+    if (note) {
+      note.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Progresso salvo neste dispositivo';
+      note.classList.add('show');
+      clearTimeout(window._noteT);
+      window._noteT = setTimeout(function() { note.classList.remove('show'); }, 1800);
+    }
+  } catch (e) { /* localStorage indisponivel: formulario segue funcionando sem salvar */ }
+}
+
+function salvarEstado() { clearTimeout(_saveDebounce); _saveDebounce = setTimeout(_doSave, 400); }
+function salvarEstadoAgora() { clearTimeout(_saveDebounce); _doSave(); }
+
+function restaurarEstado() {
+  try {
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    var estado = JSON.parse(raw);
+    var id;
+    for (id in estado.campos) { var el = document.getElementById(id); if (el) el.value = estado.campos[id]; }
+    for (id in estado.canais) { escolherCanal(id, estado.canais[id] === 'sim'); }
+    for (id in estado.just) {
+      var wrap = document.getElementById(id);
+      if (wrap) { var ta = wrap.querySelector('textarea'); if (ta) ta.value = estado.just[id]; wrap.classList.add('show'); reservarEspacoJust(wrap); }
+    }
+    if (estado.extras) {
+      var tipos = ['fixo', 'variavel'];
+      for (var t = 0; t < tipos.length; t++) {
+        var list = estado.extras[tipos[t]] || [];
+        for (var it = 0; it < list.length; it++) addExtra(tipos[t], list[it].nome, list[it].valor);
+      }
+    }
+  } catch (e) {}
+}
+
+function limparEstado() { try { localStorage.removeItem(STORAGE_KEY); } catch (e) {} }
+
+function attachAutosave() {
+  var all = document.querySelectorAll('input[type=text], textarea');
+  for (var i = 0; i < all.length; i++) {
+    all[i].addEventListener('input', salvarEstado);
+    all[i].addEventListener('change', salvarEstado);
+  }
+  window.addEventListener('pagehide', salvarEstadoAgora);
+  document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'hidden') salvarEstadoAgora();
+  });
+  window.addEventListener('resize', function() {
+    var shown = document.querySelectorAll('.justificativa-wrap.show');
+    for (var i = 0; i < shown.length; i++) reservarEspacoJust(shown[i]);
+  });
+}
+</script>
+</body>
+</html>
